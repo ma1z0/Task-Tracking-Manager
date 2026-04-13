@@ -21,6 +21,6 @@ from rest_framework import routers, serializers, viewsets
 
 urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
-    path("api/tasks/", include("tasks.urls")),
+    path("api/", include("tasks.urls")),
     path('admin/', admin.site.urls),
 ]
