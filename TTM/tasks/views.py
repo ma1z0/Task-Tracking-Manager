@@ -4,10 +4,11 @@ from rest_framework.permissions import IsAuthenticated
 
 from tasks.models import Task
 from tasks.serializers import TaskSerializer
+from tasks.permissions import IsOwnerOrAssigneeLimited
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwnerOrAssigneeLimited]
     
     def get_queryset(self): 
         return Task.objects.filter(
