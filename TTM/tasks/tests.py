@@ -17,6 +17,23 @@ class TaskAPITests(APITestCase):
             description = 'dasdasd',
             owner = self.owner,
             assignee = self.assignee,
+            status = Task.Status.OPEN,
+        )
+
+        self.done_task = Task.objects.create(
+            title = 'test_task_2',
+            description = 'fafasf',
+            owner = self.owner,
+            assignee = self.assignee,
+            status = Task.Status.DONE,
+        )
+
+        self.in_progress_task = Task.objects.create(
+            title = 'test_task_3',
+            description = 'ghghgh',
+            owner = self.owner,
+            assignee = self.assignee,
+            status = Task.Status.IN_PROGRESS,
         )
 
     def test_owner_can_retrieve_task(self):
@@ -83,3 +100,33 @@ class TaskAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         after_new_task = Task.objects.count()
         self.assertEqual(before_new_task, after_new_task)
+
+    def test_owner_change_task_status(self):
+        self.client.force_authenticate(user=self.owner)
+        data = {"status": "DONE"}
+        response = self.client.patch(f"/api/tasks/{self.task.id}/", data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.DONE)
+        self.assertIsNotNone(self.task.completed_at)
+
+    def test_completed_at_cleared_when_task_reopened(self):
+        self.client.force_authenticate(user=self.owner)
+        done_data = {"status": Task.Status.DONE}
+        response = self.client.patch(f"/api/tasks/{self.task.id}/", done_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertIsNotNone(self.task.completed_at)
+
+        reopen_data = {"status": Task.Status.IN_PROGRESS}
+        response = self.client.patch(f"/api/tasks/{self.task.id}/", reopen_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.task.refresh_from_db()
+        self.assertIsNone(self.task.completed_at)
+        
+    def test_filter_tasks_by_status(self):
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.get("/api/tasks/", {"status": Task.Status.DONE})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        first_task_id = response.data["results"][0]["id"]
+        self.assertEqual(first_task_id, self.done_task.id)
