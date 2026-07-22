@@ -39,7 +39,7 @@ class TaskAPITests(APITestCase):
     def test_owner_can_retrieve_task(self):
         self.client.force_authenticate(user=self.owner)
         response = self.client.get(f"/api/tasks/{self.task.id}/")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_assignee_can_retrieve_assigned_task(self):
         self.client.force_authenticate(user=self.assignee)
